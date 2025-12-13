@@ -1,0 +1,11 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: FDIO;
+  src: url('./fonts/FDIOv1.ttf');
+}
+
+@theme {
+  --font-FDIO: FDIO, 'sans-serif';
+  --color-fdio-green: #00e10f;
+}
