@@ -87,9 +87,9 @@ const AppContent = () => {
             
             // Fixed column positions based on ERAM reference (80 char width)
             // Line 1: Aircraft ID (1-17), Beacon (19-23), Departure Point (25-36), Route (41-80)
-            const line1_aircraftId = (fieldValues[0] || '').substring(0, 17).padEnd(17);
+            const line1_aircraftId = (fieldValues[0] || '').substring(0, 7).padEnd(14);
             const line1_beacon = (fieldValues[5] || '').substring(0, 4).padEnd(6);
-            const line1_depPoint = (fieldValues[8]?.split(' ')[0] || '').substring(0, 11).padEnd(13);
+            const line1_depPoint = (fieldValues[8]?.split(' ')[0] || '').substring(0, 7).padEnd(9);
             
             // Remove embedded newlines from route (both literal \n and escaped \\n) and replace with spaces
             let route = (fieldValues[11] || '');
@@ -102,34 +102,37 @@ const AppContent = () => {
             const line2 = '  ' + (fieldValues[1] || '');
             
             // Line 3: Aircraft Type/Equipment (starts at column 1)
-            const line3_typeEquip = (fieldValues[3] || '').substring(0, 16).padEnd(18);
-            const line3_time = (fieldValues[6] || '').substring(0, 7).padEnd(22);
+            const line3_typeEquip = (fieldValues[3] || '').substring(0, 14).padEnd(14);
+            const line3_time = (fieldValues[6] || '').substring(0, 6).padEnd(6);
             
             // Line 4: CID (1-17), Altitude (19-23), Remarks (41-80)
-            const line4_cid = (fieldValues[4] || '').substring(0, 17).padEnd(18);
-            const line4_altitude = (fieldValues[7] || '').substring(0, 4).padEnd(22);
+            const line4_cid = (fieldValues[4] || '').substring(0, 4).padEnd(14);
+            const line4_altitude = (fieldValues[7] || '').substring(0, 4).padEnd(15);
             const line4_remarks = (fieldValues[12] || '').substring(0, 40);
             
             // Route continuation - if route > 40 chars, continuation appears at column 41 on line 2
             // But revision number ALSO appears on line 2 at column 3
-            let line2_full = line2; // Revision at column 3
+            let line2_full = line2;
+            let line1_route_display = line1_route;
+
             if (route.length > 40) {
-              const routeContinuation = route.substring(40, 120); // Next 80 chars
-              // Pad line2 to exactly 40 chars, then add route continuation
-              line2_full = line2.padEnd(40) + routeContinuation;
-              console.log('ReceiveStripItems - Line2 debug:', {
-                line2: `"${line2}"`,
-                line2_length: line2.length,
-                line2_padded_length: line2.padEnd(40).length,
-                routeContinuation: `"${routeContinuation}"`
-              });
+              const first40 = route.slice(0, 40);
+              const lastSpace = first40.lastIndexOf(' ');
+
+              const splitIndex = lastSpace !== -1 ? lastSpace : 40;
+
+              // Line 1 shows route up to the word boundary
+              line1_route_display = route.slice(0, splitIndex);
+              // Line 2 shows ONLY the continuation, padded so it aligns at column 41
+              const secondLine = route.slice(splitIndex).trimStart();
+              line2_full = line2.padEnd(40) + secondLine;
             }
             
             console.log('ReceiveStripItems - Total route continuation lines:', route.length > 40 ? 1 : 0);
             
             // Build strip: Line1 + Line2(revision + route cont) + Line3(type/time) + Line4(cid/alt/remarks)
             const formattedStrip = 
-              line1_aircraftId + line1_beacon + line1_depPoint + line1_route + '\n' +
+              line1_aircraftId + line1_beacon + line1_depPoint + line1_route_display + '\n' +
               line2_full + '\n' +
               line3_typeEquip + line3_time + '\n' +
               line4_cid + line4_altitude + line4_remarks;
@@ -721,24 +724,26 @@ const AppContent = () => {
             // Fixed column positions based on ERAM reference (80 char width)
             // Line 1: Aircraft ID (1-17), Beacon (19-23), Departure Point (25-36), Route (41-80)
             const line1_aircraftId = (fieldValues[0] || '').substring(0, 7).padEnd(14);
-            const line1_beacon = (fieldValues[5] || '').substring(0, 4).padEnd(7);
-            const line1_depPoint = (fieldValues[8]?.split(' ')[0] || '').substring(0, 11).padEnd(13);
+            const line1_beacon = (fieldValues[5] || '').substring(0, 4).padEnd(6);
+            const line1_depPoint = (fieldValues[8]?.split(' ')[0] || '').substring(0, 7).padEnd(9);
             
             // Remove embedded newlines from route (both literal \n and escaped \\n) and replace with spaces
             let route = (fieldValues[11] || '');
             route = route.replace(/\\n/g, ' ').replace(/\n/g, ' ');
             const line1_route = route.substring(0, 40);
             
+            console.log('Route info:', { fullRoute: route, length: route.length, needsContinuation: route.length > 40 });
+            
             // Line 2: Revision Number (starts at position 3)
             const line2 = '  ' + (fieldValues[1] || '');
             
             // Line 3: Aircraft Type/Equipment (starts at column 1)
-            const line3_typeEquip = (fieldValues[3] || '').substring(0, 16).padEnd(18);
-            const line3_time = (fieldValues[6] || '').substring(0, 7).padEnd(22);
+            const line3_typeEquip = (fieldValues[3] || '').substring(0, 14).padEnd(14);
+            const line3_time = (fieldValues[6] || '').substring(0, 6).padEnd(6);
             
             // Line 4: CID (1-17), Altitude (19-23), Remarks (41-80)
-            const line4_cid = (fieldValues[4] || '').substring(0, 17).padEnd(18);
-            const line4_altitude = (fieldValues[7] || '').substring(0, 4).padEnd(22);
+            const line4_cid = (fieldValues[4] || '').substring(0, 4).padEnd(14);
+            const line4_altitude = (fieldValues[7] || '').substring(0, 4).padEnd(15);
             const line4_remarks = (fieldValues[12] || '').substring(0, 40);
             
             // Route continuation - if route > 40 chars, continuation appears at column 41 on line 2
