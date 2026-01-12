@@ -81,9 +81,9 @@ const AppContent = () => {
       const handleStripPrint = (topic: any, stripItems: any[]) => {
         stripItems.forEach(strip => {
           if (strip?.fieldValues) {
+            // Format using fieldValues from strip data based on ERAM strip layout
+            // fieldValues: [0:callsign, 1:rev, 2:?, 3:type/equip, 4:cid, 5:beacon, 6:proptime, 7:alt, 8:dep/arr, 9-10:?, 11:route, 12:remarks]
             const fieldValues = strip.fieldValues;
-            
-            console.log('ReceiveStripItems - Full fieldValues:', fieldValues);
             
             // Fixed column positions based on ERAM reference (80 char width)
             // Line 1: Aircraft ID (1-17), Beacon (19-23), Departure Point (25-36), Route (41-80)
@@ -94,7 +94,8 @@ const AppContent = () => {
             // Remove embedded newlines from route (both literal \n and escaped \\n) and replace with spaces
             let route = (fieldValues[11] || '');
             route = route.replace(/\\n/g, ' ').replace(/\n/g, ' ');
-            const line1_route = route.substring(0, 40);
+            let line1_route = route.substring(0, 40);
+            let line2_route = '';
             
             console.log('Route info:', { fullRoute: route, length: route.length, needsContinuation: route.length > 40 });
             
@@ -108,11 +109,14 @@ const AppContent = () => {
             // Line 4: CID (1-17), Altitude (19-23), Remarks (41-80)
             const line4_cid = (fieldValues[4] || '').substring(0, 4).padEnd(14);
             const line4_altitude = (fieldValues[7] || '').substring(0, 4).padEnd(15);
-            const line4_remarks = (fieldValues[12] || '').substring(0, 40);
-            
+            let line4_remarks = (fieldValues[12] || '').substring(0, 40);
+            if (route.split('○').length > 1) {
+              line4_remarks = `○${route.split('○')[1]}`.substring(0, 40);
+              route = route.split('○')[0]; // Show only the part before the ○ in the route field
+            }
             // Route continuation - if route > 40 chars, continuation appears at column 41 on line 2
             // But revision number ALSO appears on line 2 at column 3
-            let line2_full = line2;
+            //let line2_full = line2;
             let line1_route_display = line1_route;
 
             if (route.length > 40) {
@@ -125,16 +129,14 @@ const AppContent = () => {
               line1_route_display = route.slice(0, splitIndex);
               // Line 2 shows ONLY the continuation, padded so it aligns at column 41
               const secondLine = route.slice(splitIndex).trimStart();
-              line2_full = line2.padEnd(40) + secondLine;
+              line2_route = secondLine;
             }
-            
-            console.log('ReceiveStripItems - Total route continuation lines:', route.length > 40 ? 1 : 0);
             
             // Build strip: Line1 + Line2(revision + route cont) + Line3(type/time) + Line4(cid/alt/remarks)
             const formattedStrip = 
               line1_aircraftId + line1_beacon + line1_depPoint + line1_route_display + '\n' +
-              line2_full + '\n' +
-              line3_typeEquip + line3_time + '\n' +
+              line2 + '\n' +
+              line3_typeEquip + line3_time + line2_route + '\n\n' +
               line4_cid + line4_altitude + line4_remarks;
             
             console.log('ReceiveStripItems - Final formatted strip:', formattedStrip);
@@ -339,7 +341,7 @@ const AppContent = () => {
               wakeTurbulenceCode: '',
             });
             
-            return `ACCEPT\n${aircraftId}`;
+              return `ACCEPT\n${aircraftId}`;
           } catch (error) {
             console.error('Failed to create flightplan:', error);
             const errorStr = String(error);
@@ -656,7 +658,7 @@ const AppContent = () => {
             
             await amendFlightplan(amendDto);
             
-            return `ACCEPT\n${amendDto.aircraftId}`;
+            return `ACCEPT ${amendDto.aircraftId}/${amendDto.cid}`;
           } catch (error) {
             console.error('Failed to amend flightplan:', error);
             const errorStr = String(error);
@@ -730,7 +732,8 @@ const AppContent = () => {
             // Remove embedded newlines from route (both literal \n and escaped \\n) and replace with spaces
             let route = (fieldValues[11] || '');
             route = route.replace(/\\n/g, ' ').replace(/\n/g, ' ');
-            const line1_route = route.substring(0, 40);
+            let line1_route = route.substring(0, 40);
+            let line2_route = '';
             
             console.log('Route info:', { fullRoute: route, length: route.length, needsContinuation: route.length > 40 });
             
@@ -744,11 +747,14 @@ const AppContent = () => {
             // Line 4: CID (1-17), Altitude (19-23), Remarks (41-80)
             const line4_cid = (fieldValues[4] || '').substring(0, 4).padEnd(14);
             const line4_altitude = (fieldValues[7] || '').substring(0, 4).padEnd(15);
-            const line4_remarks = (fieldValues[12] || '').substring(0, 40);
-            
+            let line4_remarks = (fieldValues[12] || '').substring(0, 40);
+            if (route.split('○').length > 1) {
+              line4_remarks = `○${route.split('○')[1]}`.substring(0, 40);
+              route = route.split('○')[0]; // Show only the part before the ○ in the route field
+            }
             // Route continuation - if route > 40 chars, continuation appears at column 41 on line 2
             // But revision number ALSO appears on line 2 at column 3
-            let line2_full = line2;
+            //let line2_full = line2;
             let line1_route_display = line1_route;
 
             if (route.length > 40) {
@@ -761,14 +767,14 @@ const AppContent = () => {
               line1_route_display = route.slice(0, splitIndex);
               // Line 2 shows ONLY the continuation, padded so it aligns at column 41
               const secondLine = route.slice(splitIndex).trimStart();
-              line2_full = line2.padEnd(40) + secondLine;
+              line2_route = secondLine;
             }
             
             // Build strip: Line1 + Line2(revision + route cont) + Line3(type/time) + Line4(cid/alt/remarks)
             const formattedStrip = 
               line1_aircraftId + line1_beacon + line1_depPoint + line1_route_display + '\n' +
-              line2_full + '\n' +
-              line3_typeEquip + line3_time + '\n' +
+              line2 + '\n' +
+              line3_typeEquip + line3_time + line2_route + '\n\n' +
               line4_cid + line4_altitude + line4_remarks;
             
             // Print the strip (move responseBottom to responseTop, set new strip to responseBottom)
@@ -800,6 +806,7 @@ const AppContent = () => {
           if (flightplan) {
             // Format using ApiFlightplan data
             // aircraftID aircraftType assignedBeaconCode speed altitude departure route destination remarks
+            const cid = flightplan.cid || '';
             const aircraftId = flightplan.aircraftId || '';
             const aircraftType = flightplan.aircraftType || '';
             const beaconCode = flightplan.assignedBeaconCode?.toString() || '';
@@ -818,7 +825,7 @@ const AppContent = () => {
               routeLines.push(route.substring(i, i + maxLineLength));
             }
             
-            return `${aircraftId} ${aircraftType} ${beaconCode} ${speed} ${time} ${altitude} ${departure} ${route} ${destination} ${remarks}`;
+            return `${cid} ${aircraftId} ${aircraftType} ${beaconCode} ${speed} ${time} ${altitude} ${departure} ${route} ${destination} ${remarks}`;
 
           } else {
             return `FLID NOT STORED\n${input}`;
@@ -913,17 +920,17 @@ const AppContent = () => {
         <div className='terminal-body pt-5'>
           {/* Response Section (top half) */}
           {/* FDIO max character width is 80 */}
-          <div className='response-section h-[500px]'>
-            <div className='response-area-top h-[250px] w-[960px] m-auto whitespace-pre-wrap text-left'>
+          <div className='response-section h-[440px]'>
+            <div className='response-area-top h-[220px] w-[960px] m-auto whitespace-pre-wrap text-left'>
               {responseTop && '================================================================================\n'}{responseTop}
             </div>
-            <div className='response-area-bottom h-[250px] w-[960px] m-auto whitespace-pre-wrap text-left'>
+            <div className='response-area-bottom h-[220px] w-[960px] m-auto whitespace-pre-wrap text-left'>
               {responseBottom && '================================================================================\n'}{responseBottom}
             </div>
           </div>
           {/* Command Section (Bottom Half) */}
           <div className='msg-response h-[150px] w-[960px] m-auto text-left whitespace-pre-wrap'>
-              ------------------------------------------------------------------------------------------------
+              --------------------------------------------------------------------------------
               {isProcessing && (
                 <div className='response-placeholder text-center'>M E S S A G E  W A I T I N G . . .</div>
               )}
