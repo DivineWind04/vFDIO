@@ -718,6 +718,20 @@ const AppContent = () => {
             }
           }
           
+          // Always request from server first - this triggers ReceiveStripItems event
+          try {
+            console.log('SR: Requesting flight strip for:', aircraftId);
+            await requestFlightStrip(aircraftId);
+            console.log('SR: RequestFlightStrip succeeded for:', aircraftId);
+          } catch (error) {
+            console.warn('SR: RequestFlightStrip failed:', error);
+            // If server request fails and we don't have a local copy, reject
+            if (!strip?.fieldValues) {
+              return `REJECT\nSTRIP NOT FOUND\n${input}`;
+            }
+          }
+          
+          // If we have a local copy, display it immediately (server response will update via ReceiveStripItems)
           if (strip?.fieldValues) {
             // Format using fieldValues from strip data based on ERAM strip layout
             // fieldValues: [0:callsign, 1:rev, 2:?, 3:type/equip, 4:cid, 5:beacon, 6:proptime, 7:alt, 8:dep/arr, 9-10:?, 11:route, 12:remarks]
@@ -781,18 +795,12 @@ const AppContent = () => {
             setResponseTop(responseBottom);
             setResponseBottom(formattedStrip);
             
-            // Also request from server to trigger ReceiveStripItems event (which will overwrite this with server's version)
-            try {
-              await requestFlightStrip(aircraftId);
-            } catch (error) {
-              console.warn('RequestFlightStrip failed:', error);
-            }
-            
             // Return the formatted strip data
             return formattedStrip;
-          } else {
-            return `REJECT\nSTRIP NOT FOUND\n${input}`;
           }
+          
+          // No local strip but server request succeeded - strip will arrive via ReceiveStripItems event
+          return `ACCEPT SR ${identifier}\nSTRIP REQUESTED`;
         }
         
         case 'FR': {
