@@ -689,8 +689,28 @@ const AppContent = () => {
             return `REJECT FORMAT\n${input}`;
           }
           const station = args[0];
-          // TODO: Implement weather request
-          return `ACCEPT WEATHER STAT REQ\n${station}`;
+          
+          try {
+            // Fetch METAR from VATSIM metar API (same as EDST)
+            const response = await fetch(
+              `https://metar.vatsim.net/${station}`
+            );
+            
+            if (!response.ok) {
+              return `REJECT WEATHER STAT REQ\nSTATION NOT FOUND`;
+            }
+            
+            const metar = await response.text();
+            
+            if (!metar || metar.trim() === '' || metar.includes('No METAR')) {
+              return `REJECT WEATHER STAT REQ\nNO DATA FOR ${station}`;
+            }
+            
+            return `ACCEPT WEATHER STAT REQ\n${metar.trim()}`;
+          } catch (error) {
+            console.error('Failed to fetch METAR:', error);
+            return `REJECT WEATHER STAT REQ\nFETCH FAILED`;
+          }
         }
         
         case 'SR': {
@@ -974,11 +994,11 @@ const AppContent = () => {
           <div className='terminal-footer'>
             <div className='connection-status fixed bottom-4 left-4 text-xs'>
               <div className={`status-dot ${hubConnected ? '' : 'disconnected'}`}></div>
-              <span>VNAS HUB: {hubConnected ? 'CONNECTED' : 'DISCONNECTED'}</span>
+              {/* <span>VNAS HUB: {hubConnected ? 'CONNECTED' : 'DISCONNECTED'}</span> */}
             </div>
 
             <div className='terminal-info fixed bottom-10 left-4 text-xs'>
-              ARTCC: {session?.artccId?.toUpperCase() || 'N/A'} | STATUS: {session?.isActive ? 'ACTIVE' : 'INACTIVE'}
+              {/* ARTCC: {session?.artccId?.toUpperCase() || 'N/A'} | STATUS: {session?.isActive ? 'ACTIVE' : 'INACTIVE'} */}
             </div>
             <Recat></Recat>
           </div>
