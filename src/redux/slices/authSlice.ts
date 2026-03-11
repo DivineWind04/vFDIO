@@ -157,7 +157,6 @@ export const authSlice = createSlice({
         localStorage.setItem("vatsim-token", newToken);
       } else {
         toast.error(`Failed to log in: ${action.payload.statusText}`);
-        console.log(`Failed to log in: ${action.payload.statusText}`);
       }
     });
     builder.addCase(login.rejected, (state, action) => {
@@ -165,7 +164,6 @@ export const authSlice = createSlice({
       state.vatsimCode = null;
       localStorage.removeItem("vatsim-token");
       toast.error(`Failed to log in: ${action.error.message}`);
-      console.log(`Failed to log in: ${action.error.message}`);
     });
   },
   reducers: {
