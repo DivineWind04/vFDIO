@@ -60,49 +60,9 @@ FPF DEP KORD                # Find all departures from Chicago O'Hare
 FPSTATS                     # Show statistics summary
 ```
 
-## Features
-
-### Direct DTO Access
-- Access to complete `ApiFlightplan` objects
-- No dependency on hub-specific commands
-- Full control over data filtering and display
-
-### Rich Filtering
-- Filter by aircraft ID, departure, destination, altitude, status, route
-- Combine multiple filters in search commands
-- Case-insensitive searching
-
-### Multiple Display Modes
-- Table view for multiple flightplans
-- Detailed view for individual flightplans
-- Statistics view for data analysis
-
-### Real-time Updates
-- Automatically syncs with hub flightplan data
-- Redux state management for consistency
-- Command history tracking
-
 ## Implementation Details
 
-### Files Created
+### Files
 - `src/services/customFlightplanService.ts` - Core flightplan operations
 - `src/services/customFlightplanCommandParser.ts` - Command parsing logic
-- `src/hooks/useCustomFlightplanCommands.ts` - React hook for integration
-- `src/components/FlightplanVisualization.tsx` - UI components
 - `src/redux/slices/customFlightplanSlice.ts` - State management
-
-### Integration
-The system integrates seamlessly with your existing terminal interface in `App.tsx`. Commands are automatically detected and routed to the custom parser while preserving normal hub command functionality.
-
-### Data Sources
-- Pulls flightplan data from your existing `HubContext`
-- Works with the existing `Map<string, ApiFlightplan>` structure
-- Maintains compatibility with current hub operations
-
-## Status Display
-The terminal now shows:
-- Current flightplan count
-- Hub connection status
-- Reminder to use `FPHELP` for custom commands
-
-This gives you complete control over flightplan data visualization and manipulation while maintaining integration with your existing vFDIO system.
