@@ -25,7 +25,7 @@ export type ApiFlightplan = {
   minutesEnroute: number;
   pilotCid: string;
   remarks: string;
-  holdAnnotations: null;
+  holdAnnotations: Nullable<HoldAnnotations>;
   wakeTurbulenceCode: string;
 };
 
