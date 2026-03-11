@@ -49,18 +49,7 @@ type HubContextValue = {
   flightStrips: Map<string, any>;
 };
 
-export const HubContext = createContext<HubContextValue>({
-  connectHub: () => Promise.reject(new Error('HubContext not initialized')),
-  disconnectHub: () => Promise.reject(new Error('HubContext not initialized')),
-  hubConnection: null,
-  sendEramMessage: () => Promise.reject(new Error('HubContext not initialized')),
-  sendCommand: () => Promise.reject(new Error('HubContext not initialized')),
-  amendFlightplan: () => Promise.reject(new Error('HubContext not initialized')),
-  deleteFlightplan: () => Promise.reject(new Error('HubContext not initialized')),
-  requestFlightStrip: () => Promise.reject(new Error('HubContext not initialized')),
-  flightplans: new Map(),
-  flightStrips: new Map(),
-});
+export const HubContext = createContext<HubContextValue | null>(null);
 
 export const HubContextProvider = ({ children }: { children: ReactNode }) => {
   const dispatch = useRootDispatch();
