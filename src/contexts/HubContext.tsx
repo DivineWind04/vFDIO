@@ -19,12 +19,10 @@ import type { ApiSessionInfoDto } from "../types/apiTypes/apiSessionInfoDto";
 import type { ApiFlightplan, CreateOrAmendFlightplanDto } from "../types/apiTypes/apiFlightplan";
 import { ApiTopic } from "../types/apiTypes/apiTopic";
 import { updateFlightplanThunk, deleteFlightplanThunk, initThunk } from "../redux/thunks";
-import { openWindowThunk } from "../redux/thunks/windowThunks";
 import { addOutageMessage, delOutageMessage, setFsdIsConnected } from "../redux/slices/appSlice";
 import { setMcaAcceptMessage, setMcaRejectMessage, setMraMessage } from "../redux/slices/mcaSlice";
 import { setArtccId, setSectorId } from "../redux/slices/sectorSlice";
 import { useRootDispatch, useRootSelector } from "../redux/hooks";
-import { useSocketConnector } from "../hooks/useSocketConnector";
 import { VERSION } from "../utils/constants";
 import { OutageEntry } from "../types/outageEntry";
 import { HubConnectionState } from "@microsoft/signalr";
@@ -55,7 +53,6 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
   const dispatch = useRootDispatch();
   const vatsimToken = useRootSelector(vatsimTokenSelector)!;
   const ref = useRef<Nullable<HubConnection>>(null);
-  const { disconnectSocket } = useSocketConnector();
   const env = useRootSelector(envSelector);
   const navigate = useNavigate();
   const hubConnected = useRootSelector(hubConnectedSelector);
@@ -70,12 +67,6 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
       dispatch(setArtccId(""));
       dispatch(setSectorId(""));
 
-      try {
-        disconnectSocket();
-      } catch (error) {
-        console.warn("Error disconnecting socket:", error);
-      }
-
       dispatch(clearSession());
       dispatch(logout());
       navigate("/login", { replace: true });
@@ -83,7 +74,7 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
       console.error("Error during hub disconnect:", error);
       navigate("/login", { replace: true });
     }
-  }, [disconnectSocket, dispatch, navigate]);
+  }, [dispatch, navigate]);
 
   const handleSessionStart = useCallback(
     async (sessionInfo: ApiSessionInfoDto, hubConnection: HubConnection) => {
@@ -346,7 +337,6 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
 
           if (result.response) {
             dispatch(setMraMessage(result.response));
-            dispatch(openWindowThunk("MESSAGE_RESPONSE_AREA"));
           }
         } else {
           const rejectMessage = result.feedback.length > 0 ? `REJECT\n${result.feedback.join("\n")}` : "REJECT\nCommand failed";
