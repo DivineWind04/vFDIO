@@ -11,7 +11,6 @@ import Header from './components/Header';
 import InputArea from './components/InputArea';
 import Recat from './components/Recat';
 import './styles/terminal.css';
-import { isTypedArray } from 'util/types';
 import type { ApiFlightplan } from './types/apiTypes/apiFlightplan';
 
 const AppContent = () => {
