@@ -27,7 +27,7 @@ import { useRootDispatch, useRootSelector } from "../redux/hooks";
 import { useSocketConnector } from "../hooks/useSocketConnector";
 import { VERSION } from "../utils/constants";
 import { OutageEntry } from "../types/outageEntry";
-import { HubConnectionState } from "@microsoft/signalr/dist/esm/HubConnection";
+import { HubConnectionState } from "@microsoft/signalr";
 import { invokeHub } from "../utils/hubUtils";
 import { type ProcessEramMessageDto, type EramMessageProcessingResultDto, EramPositionType } from "../types/apiTypes/eramTypes";
 

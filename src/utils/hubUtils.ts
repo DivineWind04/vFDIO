@@ -1,5 +1,5 @@
 import type { HubConnection } from "@microsoft/signalr";
-import { HubConnectionState } from "@microsoft/signalr/dist/esm/HubConnection";
+import { HubConnectionState } from "@microsoft/signalr";
 
 export type HubInvocation<T> = (connection: HubConnection) => Promise<T>;
 
