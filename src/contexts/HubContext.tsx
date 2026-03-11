@@ -27,7 +27,6 @@ import { VERSION } from "../utils/constants";
 import { OutageEntry } from "../types/outageEntry";
 import { HubConnectionState } from "@microsoft/signalr";
 import { invokeHub } from "../utils/hubUtils";
-import { type ProcessEramMessageDto, type EramMessageProcessingResultDto, EramPositionType } from "../types/apiTypes/eramTypes";
 
 const toast = {
   error: (message: string) => console.error(message)
@@ -37,7 +36,6 @@ type HubContextValue = {
   connectHub: () => Promise<void>;
   disconnectHub: () => Promise<void>;
   hubConnection: HubConnection | null;
-  sendEramMessage: (eramMessage: ProcessEramMessageDto) => Promise<EramMessageProcessingResultDto | void>;
   sendCommand: (command: string) => Promise<string>;
   amendFlightplan: (fp: CreateOrAmendFlightplanDto) => Promise<void>;
   deleteFlightplan: (aircraftId: string) => Promise<void>;
@@ -326,24 +324,68 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [dispatch, handleSessionStart, env, vatsimToken]);
 
-  const sendEramMessage = useCallback(async (eramMessage: ProcessEramMessageDto) => {
-    return invokeHub<EramMessageProcessingResultDto>(() => ref.current, connectHub, async (connection) => {
-      const result = await connection.invoke<EramMessageProcessingResultDto>("processEramMessage", eramMessage);
+  const sendCommand = useCallback(async (command: string): Promise<string> => {
+    const trimmedCommand = command.trim().toUpperCase();
+    const parts = trimmedCommand.split(' ');
+    
+    try {
+      const elements = parts.map(token => ({
+        token: token
+      }));
+
+      const eramMessage = {
+        source: 1, // DSide
+        elements,
+        invertNumericKeypad: false
+      };
+
+      const result = await invokeHub<{ isSuccess: boolean; feedback: string[]; response?: string }>(
+        () => ref.current,
+        connectHub,
+        async (connection) => {
+          const res = await connection.invoke("processEramMessage", eramMessage);
+          if (res) {
+            if (res.isSuccess) {
+              const feedbackMessage = res.feedback.length > 0 ? res.feedback.join("\n") : "Command accepted";
+              console.log("ERAM command processed successfully:", feedbackMessage);
+              if (res.response) {
+                dispatch(setMraMessage(res.response));
+              }
+            } else {
+              const rejectMessage = res.feedback.length > 0 ? `REJECT\n${res.feedback.join("\n")}` : "REJECT\nCommand failed";
+              console.log("ERAM command processing failed:", rejectMessage);
+            }
+          }
+          return res;
+        }
+      );
+      
       if (result) {
         if (result.isSuccess) {
-          const feedbackMessage = result.feedback.length > 0 ? result.feedback.join("\n") : "Command accepted";
-          console.log("ERAM command processed successfully:", feedbackMessage);
-
-          if (result.response) {
-            dispatch(setMraMessage(result.response));
+          console.log(result);
+          const feedback = result.feedback?.length > 0 ? result.feedback.join("\n") : "";
+          const response = result.response || "";
+          
+          if (feedback && response) {
+            return `${feedback}\n${response}`;
+          } else if (response) {
+            return response;
+          } else if (feedback) {
+            return feedback;
+          } else {
+            return "COMMAND ACCEPTED";
           }
         } else {
-          const rejectMessage = result.feedback.length > 0 ? `REJECT\n${result.feedback.join("\n")}` : "REJECT\nCommand failed";
-          console.log("ERAM command processing failed:", rejectMessage);
+          return `REJECT: ${result.feedback.join("\n") || "COMMAND FAILED"}`;
         }
+      } else {
+        return "ERROR: NO RESPONSE FROM SERVER";
       }
-      return result;
-    });
+      
+    } catch (error) {
+      console.error('Command processing failed:', error);
+      return `ERROR: ${error}`;
+    }
   }, [connectHub, dispatch]);
 
   const amendFlightplan = useCallback(async (fp: CreateOrAmendFlightplanDto) => {
@@ -394,7 +436,6 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
       dispatch(deleteFlightplanThunk(aircraftId));
     } catch (error) {
       console.error(`Failed to clear flightplan: ${error}`);
-      // Re-throw the error so the caller can handle it
       throw error;
     }
   }, [amendFlightplan, dispatch]);
@@ -404,52 +445,6 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
       await connection.invoke<void>("RequestFlightStrip", facilityId, aircraftId.toUpperCase());
     });
   }, [connectHub, facilityId]);
-
-  const sendCommand = useCallback(async (command: string): Promise<string> => {
-    const trimmedCommand = command.trim().toUpperCase();
-    const parts = trimmedCommand.split(' ');
-    
-    try {
-      const elements = parts.map(token => ({
-        token: token
-      }));
-
-      // Always use DSide (ERAM) position type to allow ERAM commands from any position
-      const eramMessage: ProcessEramMessageDto = {
-        source: EramPositionType.DSide,
-        elements,
-        invertNumericKeypad: false
-      };
-
-      const result = await sendEramMessage(eramMessage);
-      
-      if (result) {
-        if (result.isSuccess) {
-          console.log(result);
-          const feedback = result.feedback?.length > 0 ? result.feedback.join("\n") : "";
-          const response = result.response || "";
-          
-          if (feedback && response) {
-            return `${feedback}\n${response}`;
-          } else if (response) {
-            return response;
-          } else if (feedback) {
-            return feedback;
-          } else {
-            return "COMMAND ACCEPTED";
-          }
-        } else {
-          return `REJECT: ${result.feedback.join("\n") || "COMMAND FAILED"}`;
-        }
-      } else {
-        return "ERROR: NO RESPONSE FROM SERVER";
-      }
-      
-    } catch (error) {
-      console.error('Command processing failed:', error);
-      return `ERROR: ${error}`;
-    }
-  }, [flightplans, sendEramMessage]);
 
   // Auto-connect when the provider is mounted and we have token + env
   useEffect(() => {
@@ -470,14 +465,13 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
     hubConnected,
     connectHub,
     disconnectHub,
-    sendEramMessage,
     sendCommand,
     amendFlightplan,
     deleteFlightplan,
     requestFlightStrip,
     flightplans,
     flightStrips,
-  }), [hubConnected, connectHub, disconnectHub, sendEramMessage, sendCommand, amendFlightplan, deleteFlightplan, requestFlightStrip, flightplans, flightStrips]);
+  }), [hubConnected, connectHub, disconnectHub, sendCommand, amendFlightplan, deleteFlightplan, requestFlightStrip, flightplans, flightStrips]);
 
   return <HubContext.Provider value={contextValue}>{children}</HubContext.Provider>;
 };
