@@ -29,7 +29,6 @@ import { HubConnectionState } from "@microsoft/signalr";
 import { invokeHub } from "../utils/hubUtils";
 import { type ProcessEramMessageDto, type EramMessageProcessingResultDto, EramPositionType } from "../types/apiTypes/eramTypes";
 
-// Simple toast for now
 const toast = {
   error: (message: string) => console.error(message)
 };

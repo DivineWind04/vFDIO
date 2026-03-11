@@ -16,7 +16,6 @@ import { useRootDispatch, useRootSelector } from "../redux/hooks";
 import { DOMAIN, VATSIM_CLIENT_ID } from "../utils/constants";
 import { IconProp } from "@fortawesome/fontawesome-svg-core";
 
-// Simple styles for now
 const loginStyles = {
   bg: {
     position: 'fixed' as const,

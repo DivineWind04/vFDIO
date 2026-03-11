@@ -6,11 +6,9 @@ import { login as apiLogin, fetchVnasConfiguration } from "../../api/vNasDataApi
 import type { RootState } from "../store";
 import * as jose from "jose";
 
-// Simple toast function for now - displays both console error and alert
 const toast = {
   error: (message: string, options?: any) => {
     console.error(message);
-    // For development, use alert. In production, you'd want to use a proper toast library
     if (typeof window !== 'undefined') {
       alert(`Error: ${message}`);
     }

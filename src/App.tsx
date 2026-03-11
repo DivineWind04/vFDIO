@@ -52,9 +52,7 @@ const AppContent = () => {
         clearInterval(focusInterval);
       };
     }, []);
-    // end blinking cursor/focus section
 
-    // handle ESC clear, need to define response areas handling, REMOVE placeholder text and replace with '' when ready to deploy.
     const [responseTop, setResponseTop] = useState('');
     const [responseBottom, setResponseBottom] = useState('');
 
@@ -675,7 +673,7 @@ const AppContent = () => {
           if (giMatch && giMatch.length === 3) {
             const recipient = giMatch[1].toUpperCase();
             const message = giMatch[2];
-            // TODO: Implement GI message sending via your hub/socket
+            // TODO: Implement GI message sending
             return `ACCEPT GI TO ${recipient}\n${message}`;
           } else {
             return `REJECT FORMAT\n${input}`;
@@ -920,7 +918,6 @@ const AppContent = () => {
             // Set new response to responseBottom
             setResponseBottom(result);
           }
-          // then dynamically add a scroll effect for each subsequent response's data to cycle it upwards.
         } catch (error) {
           const errorMsg = `REJECT ${typedCommand.toUpperCase()}\n\n${String(error).toUpperCase()}`;
           setLastFeedbackErrorMessage(errorMsg);
