@@ -130,10 +130,10 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
         if (hubConnection.state === HubConnectionState.Connected) {
           const joinSessionParams = {
             sessionId: sessionInfo.id,
-            clientName: "vTDLS",
-            clientVersion: '1.3.0',
-            hasEramConfig: true,
-            eramSectorId: 99
+            clientName: "vFDIO",
+            clientVersion: VERSION,
+            hasEramConfig: !!primaryPosition.eramConfiguration,
+            eramSectorId: primaryPosition.eramConfiguration?.sectorId ?? 0
           };
           console.log('Sending joinSession with params:', joinSessionParams);
           await hubConnection.invoke<void>("joinSession", joinSessionParams);
