@@ -204,7 +204,7 @@ export const authSlice = createSlice({
 export const { setSession, clearSession, setEnv, setSessionIsActive, setHubConnected, logout } = authSlice.actions;
 export default authSlice.reducer;
 
-export const vatsimTokenSelector = () => localStorage.getItem("vatsim-token");
+export const vatsimTokenSelector = (state: RootState) => state.auth.vatsimToken;
 export const configSelector = (state: RootState) => state.auth.vnasConfiguration;
 export const envSelector = (state: RootState) => state.auth.environment;
 export const sessionActiveSelector = (state: RootState) => state.auth.sessionActive;
