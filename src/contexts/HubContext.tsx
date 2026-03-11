@@ -348,7 +348,7 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
   }, [dispatch, handleSessionStart, env, vatsimToken]);
 
   const sendEramMessage = useCallback(async (eramMessage: ProcessEramMessageDto) => {
-    return invokeHub<EramMessageProcessingResultDto>(ref.current, connectHub, async (connection) => {
+    return invokeHub<EramMessageProcessingResultDto>(() => ref.current, connectHub, async (connection) => {
       const result = await connection.invoke<EramMessageProcessingResultDto>("processEramMessage", eramMessage);
       if (result) {
         if (result.isSuccess) {
@@ -369,7 +369,7 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
   }, [connectHub, dispatch]);
 
   const amendFlightplan = useCallback(async (fp: CreateOrAmendFlightplanDto) => {
-    return invokeHub<void>(ref.current, connectHub, async (connection) => {
+    return invokeHub<void>(() => ref.current, connectHub, async (connection) => {
       await connection.invoke<void>("amendFlightPlan", fp);
     });
   }, [connectHub]);
@@ -422,7 +422,7 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
   }, [amendFlightplan, dispatch]);
 
   const requestFlightStrip = useCallback(async (aircraftId: string) => {
-    return invokeHub<void>(ref.current, connectHub, async (connection) => {
+    return invokeHub<void>(() => ref.current, connectHub, async (connection) => {
       await connection.invoke<void>("RequestFlightStrip", facilityId, aircraftId.toUpperCase());
     });
   }, [connectHub, facilityId]);
