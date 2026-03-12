@@ -73,8 +73,11 @@ const AppContent = () => {
     useEffect(() => {
       if (!hubConnection) return;
 
+      const separatorTypes = ['RedSeparator', 'GreenSeparator', 'WhiteSeparator', 'HalfStripLeft'];
+
       const handleStripPrint = (topic: any, stripItems: any[]) => {
         stripItems.forEach(strip => {
+          if (separatorTypes.includes(strip?.type)) return;
           if (strip?.fieldValues) {
             const formattedStrip = formatStripFromFieldValues(strip.fieldValues);
             console.log('ReceiveStripItems - Final formatted strip:', formattedStrip);
