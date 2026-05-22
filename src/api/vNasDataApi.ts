@@ -24,7 +24,7 @@ export const refreshToken = async (apiBaseUrl: string, vatsimToken: string) => {
 };
 
 export const fetchVnasConfiguration = async () => {
-  const response = await fetch(VNAS_CONFIG_URL);
+  const response = await fetch(VNAS_CONFIG_URL!);
   
   if (!response.ok) {
     throw new Error(`Failed to fetch vNAS configuration: ${response.statusText}`);

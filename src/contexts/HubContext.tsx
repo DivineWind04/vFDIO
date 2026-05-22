@@ -105,10 +105,11 @@ export const HubContextProvider = ({ children }: { children: ReactNode }) => {
         dispatch(initThunk());
 
         if (hubConnection.state === HubConnectionState.Connected) {
+          const clientName = "vTDLS";
           const joinSessionParams = {
             sessionId: sessionInfo.id,
-            clientName: "vFDIO",
-            clientVersion: VERSION,
+            clientName,
+            clientVersion: "1.3.19",
             hasEramConfig: !!primaryPosition.eramConfiguration,
             eramSectorId: primaryPosition.eramConfiguration?.sectorId ?? 0
           };

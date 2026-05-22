@@ -1,5 +1,8 @@
 import type { ApiFlightplan, CreateOrAmendFlightplanDto } from '../types/apiTypes/apiFlightplan';
 import { formatStripFromFieldValues } from '../utils/stripFormatter';
+import { findBestRouteForFlightplan, buildAmendDto } from './autoAdaptedRoutingProcessor';
+import { stripAdaptedRoute } from './adaptedRoutingService';
+import type { ATSpecialistConfig } from './adaptedRoutingXmlParser';
 
 export interface CommandContext {
   flightplans: Map<string, ApiFlightplan>;
@@ -11,6 +14,10 @@ export interface CommandContext {
   responseBottom: string;
   setResponseTop: (value: string) => void;
   setResponseBottom: (value: string) => void;
+  setActiveRouteGroups: (groups: string[]) => void;
+  setActiveConfiguration: (config: string | null) => void;
+  activeConfiguration: string | null;
+  atSpecialistConfigs: Map<string, ATSpecialistConfig>;
 }
 
 function findFlightplan(identifier: string, flightplans: Map<string, ApiFlightplan>): ApiFlightplan | undefined {
@@ -599,6 +606,57 @@ async function handleRS(input: string, args: string[], ctx: CommandContext): Pro
   }
 }
 
+async function handleRM(input: string, args: string[], ctx: CommandContext): Promise<string> {
+  if (args.length !== 1) {
+    return `REJECT FORMAT\n${input}`;
+  }
+  const identifier = args[0];
+  const fp = findFlightplan(identifier, ctx.flightplans);
+  if (!fp) {
+    return `REJECT 02 FLID NOT\nSTORED`;
+  }
+
+  // Strip any existing adapted block (+...+) from the route before re-matching
+  const strippedRoute = stripAdaptedRoute(fp.route || '');
+  const strippedFp = { ...fp, route: strippedRoute };
+
+  // Use the active SA configuration's groups if one is set
+  const activeGroups = ctx.activeConfiguration
+    ? (ctx.atSpecialistConfigs.get(ctx.activeConfiguration)?.activeGroups ?? [])
+    : [];
+
+  const result = await findBestRouteForFlightplan(strippedFp, activeGroups);
+
+  if (!result || !result.needsAmendment) {
+    return `ACCEPT RM ${fp.aircraftId}\nNO ROUTE CHANGE`;
+  }
+
+  try {
+    const dto = buildAmendDto(fp, result.newRoute);
+    await ctx.amendFlightplan(dto);
+    return `ACCEPT RM ${fp.aircraftId}\n${result.routeId}`;
+  } catch (error) {
+    console.error('RM: amendment failed', error);
+    return `REJECT RM AMENDMENT FAILED\n${fp.aircraftId}`;
+  }
+}
+
+function handleSA(input: string, args: string[], ctx: CommandContext): string {
+  if (args.length === 0) {
+    return `REJECT FORMAT\n${input}`;
+  }
+  const name = args[0];
+  const config = ctx.atSpecialistConfigs.get(name);
+  if (!config) {
+    return `REJECT SA UNKNOWN CONFIG\n${name}`;
+  }
+  ctx.setActiveConfiguration(name);
+  const parts: string[] = [];
+  if (config.activeGroups.length > 0) parts.push(`GROUPS: ${config.activeGroups.join(' ')}`);
+  if (config.activeRoutes.length > 0) parts.push(`ROUTES: ${config.activeRoutes.join(' ')}`);
+  return `ACCEPT SA ${name}\n${parts.join('  ')}`;
+}
+
 export async function parseCommand(input: string, ctx: CommandContext): Promise<string> {
   const [command, ...args] = input.trim().split(/\s+/).map(s => s.toUpperCase());
 
@@ -617,6 +675,10 @@ export async function parseCommand(input: string, ctx: CommandContext): Promise<
       return handleFR(input, args, ctx);
     case 'RS':
       return handleRS(input, args, ctx);
+    case 'RM':
+      return handleRM(input, args, ctx);
+    case 'SA':
+      return handleSA(input, args, ctx);
     default:
       // Send to ERAM hub for all other commands
       return ctx.sendCommand(input);

@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./pkg-dist",
+    "declaration": true,
+    "declarationDir": "./pkg-dist",
+    "declarationMap": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false
+  },
+  "include": ["src/lib", "src/components/FDIODisplay.tsx"]
+}

@@ -1,5 +1,6 @@
 node_modules/
 dist/
+pkg-dist/
 .parcel-cache/
 .env
 .DS_Store
@@ -7,3 +8,6 @@ dist/
 .vscode/
 coverage/
 *Zone.Identifier
+*.pdf
+*:com.dropbox.attrs
+*.sw[op]

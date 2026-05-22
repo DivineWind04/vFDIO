@@ -4,6 +4,7 @@ import appReducer from './slices/appSlice';
 import sectorReducer from './slices/sectorSlice';
 import mcaReducer from './slices/mcaSlice';
 import customFlightplanReducer from './slices/customFlightplanSlice';
+import adaptedRoutingReducer from './slices/adaptedRoutingSlice';
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     sector: sectorReducer,
     mca: mcaReducer,
     customFlightplan: customFlightplanReducer,
+    adaptedRouting: adaptedRoutingReducer,
   },
 });
 

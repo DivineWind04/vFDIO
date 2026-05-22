@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface SectorState {
+export interface SectorState {
   artccId: string;
   sectorId: string;
 }

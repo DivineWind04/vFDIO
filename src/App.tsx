@@ -6,7 +6,11 @@ import { HubContextProvider } from './contexts/HubContext';
 import LoginProvider from './login/Login';
 import { useRootDispatch, useRootSelector } from './redux/hooks';
 import { getVnasConfig, vatsimTokenSelector, sessionSelector, logoutThunk, hubConnectedSelector } from './redux/slices/authSlice';
+import { setActiveRouteGroups, selectActiveRouteGroups, setActiveConfiguration, selectArtccId, selectActiveConfiguration } from './redux/slices/adaptedRoutingSlice';
 import { useHubConnector } from './hooks/useHubConnector';
+import { useAutoAdaptedRouting } from './hooks/useAutoAdaptedRouting';
+import { useInitializeAdaptedRouting } from './hooks/useAdaptedRouting';
+import { loadAtSpecialistConfigs, type ATSpecialistConfig } from './services/adaptedRoutingXmlParser';
 import Header from './components/Header';
 import InputArea from './components/InputArea';
 import Recat from './components/Recat';
@@ -28,6 +32,50 @@ const AppContent = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const { sendCommand, disconnectHub, deleteFlightplan, amendFlightplan, requestFlightStrip, flightplans, flightStrips, hubConnection } = useHubConnector();
     const hubConnected = useRootSelector(hubConnectedSelector);
+    const activeRouteGroups = useRootSelector(selectActiveRouteGroups);
+    const artccId = useRootSelector(selectArtccId);
+    const activeConfiguration = useRootSelector(selectActiveConfiguration);
+
+    const { initialize, isInitialized: routingInitialized, error: routingError } = useInitializeAdaptedRouting();
+
+    const [atSpecialistConfigs, setAtSpecialistConfigs] = useState<Map<string, ATSpecialistConfig>>(new Map());
+
+    useEffect(() => {
+      loadAtSpecialistConfigs(artccId).then(setAtSpecialistConfigs);
+    }, [artccId]);
+
+    // Derive the active numeric route groups from the current SA config
+    const activeGroups = activeConfiguration
+      ? (atSpecialistConfigs.get(activeConfiguration)?.activeGroups ?? [])
+      : [];
+
+    useEffect(() => {
+      console.log('[AutoRouting] Initializing adapted routing service...');
+      initialize();
+    }, [initialize]);
+
+    useEffect(() => {
+      if (routingInitialized) console.log('[AutoRouting] Service initialized successfully');
+      if (routingError) console.error('[AutoRouting] Initialization error:', routingError);
+    }, [routingInitialized, routingError]);
+
+    const autoRouting = useAutoAdaptedRouting(flightplans, {
+      enabled: true,
+      processOnChange: true,
+      activeGroups,
+    });
+
+    useEffect(() => {
+      console.log('[AutoRouting] State:', {
+        isEnabled: autoRouting.isEnabled,
+        isProcessing: autoRouting.isProcessing,
+        lastProcessedAt: autoRouting.lastProcessedAt,
+        stats: autoRouting.stats,
+        error: autoRouting.error,
+        flightplanCount: flightplans.size,
+        activeRouteGroups,
+      });
+    }, [autoRouting.isEnabled, autoRouting.isProcessing, autoRouting.lastProcessedAt, autoRouting.stats, autoRouting.error, flightplans.size, activeRouteGroups]);
 
 
     // Blink cursor + maintain focus
@@ -114,6 +162,10 @@ const AppContent = () => {
       responseBottom,
       setResponseTop,
       setResponseBottom,
+      setActiveRouteGroups: (groups: string[]) => dispatch(setActiveRouteGroups(groups)),
+      setActiveConfiguration: (config: string | null) => dispatch(setActiveConfiguration(config)),
+      activeConfiguration,
+      atSpecialistConfigs,
     };
 
     const handleKeyDown = async (e: React.KeyboardEvent<HTMLDivElement>) => {

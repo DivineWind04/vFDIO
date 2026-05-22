@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { OutageEntry } from '../../types/outageEntry';
 
-interface AppState {
+export interface AppState {
   fsdIsConnected: boolean;
   outageMessages: OutageEntry[];
 }

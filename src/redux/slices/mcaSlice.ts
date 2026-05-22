@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface McaState {
+export interface McaState {
   acceptMessage: string;
   rejectMessage: string;
   responseMessage: string;
