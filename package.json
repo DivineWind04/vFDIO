@@ -16,6 +16,11 @@
   "files": [
     "pkg-dist"
   ],
+  "targets": {
+    "main": false,
+    "module": false,
+    "types": false
+  },
   "scripts": {
     "dev": "parcel src/index.html -p 3000",
     "start": "parcel src/index.html -p 3000",
