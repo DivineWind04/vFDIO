@@ -935,8 +935,35 @@ function trimAarAlphas(aarTokens: string[], tfix: TransitionFix): string[] {
 }
 
 /**
+ * Build proposal route for Proposed/Tentative flightplans.
+ * Always outputs: +[adapted alphas]+ [full original filed route]
+ * No merging — the original route is preserved in full after the +...+ block.
+ */
+export function buildProposalRoute(
+  currentRoute: string,
+  selectedRoute: ATCRoute
+): string {
+  if (!currentRoute) return currentRoute;
+
+  let alphas: string;
+  if (selectedRoute.selectedDepartureArrival) {
+    alphas = tokenizeAlphanumerics(selectedRoute.selectedDepartureArrival.autoRouteAlphas).join(' ');
+  } else if (selectedRoute.selectedDeparture) {
+    alphas = tokenizeAlphanumerics(selectedRoute.selectedDeparture.autoRouteAlphas).join(' ');
+  } else if (selectedRoute.selectedArrival) {
+    alphas = tokenizeAlphanumerics(selectedRoute.selectedArrival.autoRouteAlphas).join(' ');
+  } else {
+    return currentRoute;
+  }
+
+  const originalTokens = tokenizeRoute(currentRoute);
+  return `+${alphas}+ ${originalTokens.join(' ')}`;
+}
+
+/**
  * Build concatenated route from selected adapted route and current route.
  * Implements §4.3.6.9: rebuilds the full route rather than prepending/appending.
+ * Used for Active flightplans only.
  *
  * ADR: [trimmed ADR alphas] [tfix] [filed route after tfix]
  * AAR: [filed route before tfix] [tfix] [trimmed AAR alphas]
@@ -1107,10 +1134,11 @@ export function computeAmendedRoute(
     };
   }
 
-  // Build concatenated route — stripRoute keeps +...+ markers for strip display,
-  // newRoute is the clean version sent to vNAS as the flightplan amendment.
-  const stripRoute = buildConcatenatedRoute(currentRoute, selectedRoute);
-  const newRoute = stripAdaptedRoute(stripRoute);
+  // Build routes:
+  // stripRoute — for Proposed/Tentative: +adapted alphas+ [full original route], no merging
+  // newRoute   — for Active: clean merged route (no +...+ markers)
+  const stripRoute = buildProposalRoute(currentRoute, selectedRoute);
+  const newRoute = stripAdaptedRoute(buildConcatenatedRoute(currentRoute, selectedRoute));
 
   // Determine route type and ID
   let routeType: "adar" | "adr" | "aar" | null = null;
