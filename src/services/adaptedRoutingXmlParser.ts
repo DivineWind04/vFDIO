@@ -310,8 +310,10 @@ export function parseAtSpecialistXml(xmlContent: string): Map<string, ATSpeciali
       const onMatch = /^(\S+?)ON$/i.exec(token);
       const offMatch = /^(\S+?)OFF$/i.exec(token);
       if (onMatch) activeGroups.push(onMatch[1]);
-      // OFF entries are simply not added (absence = inactive)
-      if (offMatch) { /* ignore */ }
+      if (offMatch) {
+        const idx = activeGroups.indexOf(offMatch[1]);
+        if (idx !== -1) activeGroups.splice(idx, 1);
+      }
     });
 
     configs.set(name, { name, activeGroups, activeRoutes });
