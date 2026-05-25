@@ -1079,7 +1079,10 @@ export function routeAlreadyContainsAdaptedRoute(
  * Result of route amendment operation
  */
 export interface RouteAmendmentResult {
+  /** Clean route without +...+ markers — sent to vNAS as the flightplan amendment. */
   newRoute: string;
+  /** Route with +...+ markers around adapted blocks — displayed on the flight strip. */
+  stripRoute: string;
   needsAmendment: boolean;
   routeType: "adar" | "adr" | "aar" | null;
   routeId: string | null;
@@ -1097,14 +1100,17 @@ export function computeAmendedRoute(
   if (routeAlreadyContainsAdaptedRoute(currentRoute, selectedRoute)) {
     return {
       newRoute: currentRoute,
+      stripRoute: currentRoute,
       needsAmendment: false,
       routeType: null,
       routeId: null,
     };
   }
 
-  // Build concatenated route
-  const newRoute = buildConcatenatedRoute(currentRoute, selectedRoute);
+  // Build concatenated route — stripRoute keeps +...+ markers for strip display,
+  // newRoute is the clean version sent to vNAS as the flightplan amendment.
+  const stripRoute = buildConcatenatedRoute(currentRoute, selectedRoute);
+  const newRoute = stripAdaptedRoute(stripRoute);
 
   // Determine route type and ID
   let routeType: "adar" | "adr" | "aar" | null = null;
@@ -1123,7 +1129,8 @@ export function computeAmendedRoute(
 
   return {
     newRoute,
-    needsAmendment: newRoute !== currentRoute,
+    stripRoute,
+    needsAmendment: stripRoute !== currentRoute,
     routeType,
     routeId,
   };

@@ -303,7 +303,7 @@ export function useAmendWithPreferredRoute() {
           departure: flightplan.departure,
           destination: flightplan.destination,
           alternate: flightplan.alternate,
-          route: result.newRoute, // The amended route!
+          route: flightplan.status === 'Active' ? result.newRoute : result.stripRoute,
           estimatedDepartureTime: flightplan.estimatedDepartureTime,
           actualDepartureTime: flightplan.actualDepartureTime,
           fuelHours: flightplan.fuelHours,
@@ -319,7 +319,7 @@ export function useAmendWithPreferredRoute() {
         console.log(
           `Amending ${flightplan.aircraftId} with ${result.routeType} route ${result.routeId}`
         );
-        console.log(`New route: ${result.newRoute}`);
+        console.log(`New route: ${flightplan.status === 'Active' ? result.newRoute : result.stripRoute}`);
 
         // Send the amendment via hub
         await hubContext.amendFlightplan(amendDto);

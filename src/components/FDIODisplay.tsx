@@ -107,7 +107,6 @@ const FDIOMain = ({ hostIsTdls }: Required<FDIODisplayProps>) => {
         if (separatorTypes.includes(strip?.type)) return;
         if (strip?.fieldValues) {
           const formatted = formatStripFromFieldValues(strip.fieldValues);
-          setResponseTop(prev => prev); // read stable reference via functional update below
           setResponseBottom(prev => {
             setResponseTop(prev);
             return formatted;

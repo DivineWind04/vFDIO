@@ -190,14 +190,15 @@ export async function processAllFlightplans(
       const amendmentResult = await findBestRouteForFlightplan(fp, activeGroups);
       
       if (amendmentResult && amendmentResult.needsAmendment) {
-        const dto = buildAmendDto(fp, amendmentResult.newRoute);
+        const routeToAmend = fp.status === 'Active' ? amendmentResult.newRoute : amendmentResult.stripRoute;
+        const dto = buildAmendDto(fp, routeToAmend);
         await amendFlightplan(dto);
-        
+
         stats.amended++;
         stats.results.push({
           aircraftId: fp.aircraftId,
           originalRoute: fp.route,
-          newRoute: amendmentResult.newRoute,
+          newRoute: routeToAmend,
           routeType: amendmentResult.routeType!,
           routeId: amendmentResult.routeId!,
           success: true
@@ -236,17 +237,18 @@ export async function processSingleFlightplan(
     return null;
   }
   
-  console.log(`[AutoRouting] ${flightplan.aircraftId}: amending via ${amendmentResult.routeType} "${amendmentResult.routeId}" -> "${amendmentResult.newRoute}"`);
+  const routeToAmend = flightplan.status === 'Active' ? amendmentResult.newRoute : amendmentResult.stripRoute;
+  console.log(`[AutoRouting] ${flightplan.aircraftId}: amending via ${amendmentResult.routeType} "${amendmentResult.routeId}" -> "${routeToAmend}"`);
 
   try {
-    const dto = buildAmendDto(flightplan, amendmentResult.newRoute);
+    const dto = buildAmendDto(flightplan, routeToAmend);
     await amendFlightplan(dto);
     console.log(`[AutoRouting] ${flightplan.aircraftId}: amendment SUCCESS`);
-    
+
     return {
       aircraftId: flightplan.aircraftId,
       originalRoute: flightplan.route,
-      newRoute: amendmentResult.newRoute,
+      newRoute: routeToAmend,
       routeType: amendmentResult.routeType!,
       routeId: amendmentResult.routeId!,
       success: true
@@ -256,7 +258,7 @@ export async function processSingleFlightplan(
     return {
       aircraftId: flightplan.aircraftId,
       originalRoute: flightplan.route,
-      newRoute: amendmentResult.newRoute,
+      newRoute: routeToAmend,
       routeType: amendmentResult.routeType!,
       routeId: amendmentResult.routeId!,
       success: false,

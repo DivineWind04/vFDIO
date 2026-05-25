@@ -129,8 +129,6 @@ const AppContent = () => {
           if (strip?.fieldValues) {
             const formattedStrip = formatStripFromFieldValues(strip.fieldValues);
             console.log('ReceiveStripItems - Final formatted strip:', formattedStrip);
-            
-            // Move current responseBottom to responseTop and set new strip to responseBottom
             setResponseTop(responseBottom);
             setResponseBottom(formattedStrip);
           }

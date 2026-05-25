@@ -632,7 +632,10 @@ async function handleRM(input: string, args: string[], ctx: CommandContext): Pro
   }
 
   try {
-    const dto = buildAmendDto(fp, result.newRoute);
+    // Proposals/Tentative get the marked route (+...+) stored in vNAS so strips show it;
+    // Active flights get the clean route.
+    const routeToAmend = fp.status === 'Active' ? result.newRoute : result.stripRoute;
+    const dto = buildAmendDto(fp, routeToAmend);
     await ctx.amendFlightplan(dto);
     return `ACCEPT RM ${fp.aircraftId}\n${result.routeId}`;
   } catch (error) {

@@ -11,3 +11,6 @@ coverage/
 *.pdf
 *:com.dropbox.attrs
 *.sw[op]
+check_repo.sh
+del.sh
+push.sh

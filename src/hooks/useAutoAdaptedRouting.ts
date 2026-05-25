@@ -119,11 +119,10 @@ export function useAutoAdaptedRouting(
     
     try {
       const result = await processSingleFlightplan(flightplan, amendFlightplan, activeGroups);
-      
-      if (result?.success) {
-        processedFlightplans.current.add(flightplan.aircraftId);
-      }
-      
+
+      // Mark as processed regardless (avoid repeated rechecks for already-adapted flights)
+      processedFlightplans.current.add(flightplan.aircraftId);
+
       return result;
     } catch (error) {
       return null;
